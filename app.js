@@ -310,18 +310,17 @@
   function updateMemory() {
     const data = Object.fromEntries(Object.entries(fields).map(([id,name]) => [name,$(id).value]));
     safeSet('memory',data);
-    $('preview-song').textContent = (data.song + ' · ED SHEERAN').toUpperCase();
-    $('preview-venue').textContent = (data.venue || 'YOUR CONCERT').toUpperCase();
+    schedulePreview();
   }
   Object.keys(fields).forEach((id)=> $(id).addEventListener('input',updateMemory));
   $('memory-photo').addEventListener('change',async(event)=>{
-    const file=event.target.files?.[0]; photoImage=null;
+    const file=event.target.files?.[0]; photoImage=null; schedulePreview();
     if (!file) {$('photo-status').textContent='No photo selected. Photos are never uploaded.';return;}
     if (file.size > 15*1024*1024) {toast('Choose a photo smaller than 15 MB.');event.target.value='';return;}
     if (!/^image\//.test(file.type)) {toast('Please select an image.');return;}
     const url=URL.createObjectURL(file);
-    try {const img=new Image();img.src=url;await img.decode();photoImage=img;$('photo-status').textContent='Photo ready · It will be included in the downloaded card.';}
-    catch {$('photo-status').textContent='This photo format is not supported by your browser. Try JPG or PNG.';}
+    try {const img=new Image();img.src=url;await img.decode();photoImage=img;schedulePreview();$('photo-status').textContent='Photo ready · Preview and download now include your picture.';}
+    catch {$('photo-status').textContent='This photo format is not supported by your browser. Try JPG or PNG.';schedulePreview();}
     finally { if(!photoImage) URL.revokeObjectURL(url); else photoImage.onload=null; }
   });
   function roundRect(ctx,x,y,w,h,r) {ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
@@ -336,8 +335,8 @@
     if(line)lines.push(line);
     lines.slice(0,maxLines).forEach((item,i)=> ctx.fillText(i===maxLines-1 && lines.length>maxLines ? item+'…':item,x,y+i*lineHeight));
   }
-  async function makeCard() {
-    const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;
+  // Draw to the on-page preview canvas AND the exported PNG from one shared renderer.
+  async function drawCard(canvas) {
     const ctx=canvas.getContext('2d'); if(!ctx) throw new Error('Canvas unavailable');
     let bg=ctx.createLinearGradient(0,0,1080,1350);bg.addColorStop(0,'#221b48');bg.addColorStop(.45,'#8b437d');bg.addColorStop(1,'#18182d');ctx.fillStyle=bg;ctx.fillRect(0,0,1080,1350);
     if(photoImage) {const scale=Math.max(1080/photoImage.width,780/photoImage.height);const w=photoImage.width*scale,h=photoImage.height*scale;ctx.save();ctx.globalAlpha=.80;ctx.drawImage(photoImage,(1080-w)/2,60+(780-h)/2,w,h);ctx.restore();}
@@ -347,7 +346,7 @@
       const posterY=740, posterH=610; const scale=Math.max(1080/loopTourPoster.width,posterH/loopTourPoster.height);
       const w=loopTourPoster.width*scale,h=loopTourPoster.height*scale;
       ctx.save(); ctx.beginPath(); ctx.rect(0,posterY,1080,posterH); ctx.clip();
-      ctx.globalAlpha=.33; ctx.drawImage(loopTourPoster,(1080-w)/2,posterY+(posterH-h)/2,w,h);
+      ctx.globalAlpha=.55; ctx.drawImage(loopTourPoster,(1080-w)/2,posterY+(posterH-h)/2,w,h);
       const posterFade=ctx.createLinearGradient(0,posterY,0,posterY+posterH);
       posterFade.addColorStop(0,'rgba(24,24,45,0.98)');
       posterFade.addColorStop(.23,'rgba(24,24,45,0.76)');
@@ -355,17 +354,31 @@
       posterFade.addColorStop(1,'rgba(24,24,45,0.10)');
       ctx.fillStyle=posterFade; ctx.fillRect(0,posterY,1080,posterH); ctx.restore();
     }
+    ctx.save(); ctx.globalAlpha=.15; // 15% opacity for the rings and heart only.
     for(const [radius,color,width] of [[295,'#ff9abcbb',43],[212,'#ffc19dcc',34],[128,'#c59dffbb',27]]){ctx.beginPath();ctx.arc(540,425,radius,0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
-    ctx.fillStyle='#ffccd3';ctx.textAlign='center';ctx.font='bold 95px Georgia, serif';ctx.fillText('♥',540,457);
-    ctx.textAlign='left';drawFitted(ctx,'LOOP NIGHT',68,86,760,31,'800','#ffe8ea');ctx.textAlign='right';drawFitted(ctx,'24 · 10 · 2026',1013,86,450,25,'700','#ffe4df');ctx.textAlign='left';
+    ctx.fillStyle='#ffccd3';ctx.textAlign='center';ctx.font='bold 95px Georgia, serif';ctx.fillText('♥',540,457); ctx.restore();
+    ctx.textAlign='left';drawFitted(ctx,'LOOP NIGHT',68,86,760,31,'800','#ffe8ea');
+    drawFitted(ctx,'24 · 10 · 2026',68,126,450,25,'700','#ffe4df');
     ctx.font='900 155px Arial, sans-serif';ctx.fillStyle='#fff7f6';ctx.fillText('I WAS',67,871);ctx.font='italic 150px Georgia, serif';ctx.fillStyle='#ffd2bd';ctx.fillText('THERE.',66,1016);
     ctx.strokeStyle='#ffffff99';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(70,1055);ctx.lineTo(1010,1055);ctx.stroke();
     const data=Object.fromEntries(Object.entries(fields).map(([id,name])=>[name,$(id).value]));
     drawFitted(ctx,(data.song||'PERFECT').toUpperCase()+' · ED SHEERAN',69,1103,940,30,'800','#ffdee8');
     drawFitted(ctx,(data.venue||'YOUR CONCERT').toUpperCase(),69,1142,940,24,'700','#ffe1e8');
     if(data.note) {ctx.font='italic 24px Georgia, serif';ctx.fillStyle='#ffe7ef';wrapText(ctx,'“'+data.note+'”',69,1184,940,2,29);}
-    if(data.name)drawFitted(ctx,'MADE FOR '+data.name.toUpperCase(),69,1294,750,22,'700','#ffdfd8');
-    ctx.textAlign='right';drawFitted(ctx,'YOUR NIGHT · YOUR SOUNDTRACK',1010,1294,750,19,'700','#ffcbd6');
+    if(data.name)drawFitted(ctx,'MADE FOR '+data.name.toUpperCase(),69,1294,900,22,'700','#ffdfd8');
+  }
+  let previewTimer=null;
+  function schedulePreview() {
+    if(previewTimer!==null) clearTimeout(previewTimer);
+    previewTimer=setTimeout(async()=>{
+      previewTimer=null;
+      try {await drawCard($('memory-preview-canvas'));}
+      catch(error) {console.warn('Souvenir preview unavailable:',error);}
+    },90);
+  }
+  async function makeCard() {
+    const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;
+    await drawCard(canvas);
     return new Promise((resolve,reject)=>canvas.toBlob((blob)=>blob?resolve(blob):reject(new Error('Card export failed')),'image/png'));
   }
   function saveBlob(blob,name) {const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);}

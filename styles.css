@@ -11,3 +11,11 @@
 .card-poster{position:absolute;left:0;right:0;bottom:0;height:48%;z-index:0;background:linear-gradient(to top,rgba(23,22,46,.18),rgba(23,22,46,.58) 32%,rgba(23,22,46,.97) 100%),url('./loop-tour.jpg') center bottom/cover no-repeat;opacity:.52;pointer-events:none;}
 .card-foot{position:relative;z-index:2;}
 @media(max-width:720px){.hero-poster{order:1;max-width:265px;max-height:265px;margin:0 auto 14px}.card-poster{height:46%}}
+
+/* The souvenir preview uses exactly the same canvas renderer as the downloadable image. */
+.souvenir-preview-panel{width:min(100%,410px);margin:0 auto;align-self:start;position:sticky;top:18px;min-width:0}
+.souvenir-preview-label{display:flex;justify-content:space-between;gap:10px;align-items:center;color:#ffc7d9;font-size:10px;font-weight:850;letter-spacing:.14em;margin:1px 0 13px}
+.souvenir-preview-label span:last-child{color:#a7a0b5;font-size:9px}
+#memory-preview-canvas{width:100%;height:auto;aspect-ratio:4/5;display:block;border-radius:20px;border:1px solid #f3b1cb66;box-shadow:0 30px 60px #06040f85;background:#302044}
+.souvenir-preview-caption{text-align:center;color:#b5a8c3;font-size:11px;line-height:1.6;margin-top:15px}
+@media(max-width:720px){.souvenir-preview-panel{position:relative;top:auto;width:min(100%,370px)}}

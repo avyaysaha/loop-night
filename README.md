@@ -43,3 +43,8 @@ At creation, the connected GitHub app could read `avyaysaha/pulse-interval-train
 ## Photo filter update
 
 The Memories export shows uploaded photos at 80% opacity and reduces the pink bloom over them. Cards without photos keep their existing styling.
+
+
+## Souvenir update
+
+The Memories screen now shows a **live on-page preview** rendered using the exact same canvas drawing function as the PNG export. Your chosen photo and editable text appear immediately; no uploads occur. The Loop Tour poster is restricted to the bottom portion at 55% draw opacity, with the circles and heart at 15%. All souvenir labels are left-aligned, and the former “Your night · Your soundtrack” footer has been removed.
