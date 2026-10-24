@@ -47,6 +47,15 @@
   if (!SONGS.includes(song)) song = 'Perfect';
   let parsedLyrics = [];
   let lineIndex = 0;
+
+  // Loop Tour poster asset used in the hero and souvenir card.
+  let loopTourPoster = null;
+  const loopTourPosterReady = new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => { loopTourPoster = img; resolve(img); };
+    img.onerror = () => resolve(null);
+    img.src = './loop-tour.jpg';
+  });
   let lyricTimer = null;
   const lyricsKey = (name) => 'lyrics:' + name;
   function showSongList(filter = '') {
@@ -331,8 +340,21 @@
     const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;
     const ctx=canvas.getContext('2d'); if(!ctx) throw new Error('Canvas unavailable');
     let bg=ctx.createLinearGradient(0,0,1080,1350);bg.addColorStop(0,'#221b48');bg.addColorStop(.45,'#8b437d');bg.addColorStop(1,'#18182d');ctx.fillStyle=bg;ctx.fillRect(0,0,1080,1350);
-    if(photoImage) {const scale=Math.max(1080/photoImage.width,780/photoImage.height);const w=photoImage.width*scale,h=photoImage.height*scale;ctx.save();ctx.globalAlpha=.15;ctx.drawImage(photoImage,(1080-w)/2,60+(780-h)/2,w,h);ctx.restore();}
-    const bloom=ctx.createRadialGradient(540,430,40,540,430,510);bloom.addColorStop(0,'#ff8bae77');bloom.addColorStop(1,'#ff8bae00');ctx.fillStyle=bloom;ctx.fillRect(0,0,1080,1000);
+    if(photoImage) {const scale=Math.max(1080/photoImage.width,780/photoImage.height);const w=photoImage.width*scale,h=photoImage.height*scale;ctx.save();ctx.globalAlpha=.80;ctx.drawImage(photoImage,(1080-w)/2,60+(780-h)/2,w,h);ctx.restore();}
+    const bloom=ctx.createRadialGradient(540,430,40,540,430,510);bloom.addColorStop(0,photoImage ? '#ff8bae30' : '#ff8bae77');bloom.addColorStop(1,'#ff8bae00');ctx.fillStyle=bloom;ctx.fillRect(0,0,1080,1000);
+    if (!loopTourPoster) await loopTourPosterReady;
+    if(loopTourPoster) {
+      const posterY=740, posterH=610; const scale=Math.max(1080/loopTourPoster.width,posterH/loopTourPoster.height);
+      const w=loopTourPoster.width*scale,h=loopTourPoster.height*scale;
+      ctx.save(); ctx.beginPath(); ctx.rect(0,posterY,1080,posterH); ctx.clip();
+      ctx.globalAlpha=.33; ctx.drawImage(loopTourPoster,(1080-w)/2,posterY+(posterH-h)/2,w,h);
+      const posterFade=ctx.createLinearGradient(0,posterY,0,posterY+posterH);
+      posterFade.addColorStop(0,'rgba(24,24,45,0.98)');
+      posterFade.addColorStop(.23,'rgba(24,24,45,0.76)');
+      posterFade.addColorStop(.56,'rgba(24,24,45,0.34)');
+      posterFade.addColorStop(1,'rgba(24,24,45,0.10)');
+      ctx.fillStyle=posterFade; ctx.fillRect(0,posterY,1080,posterH); ctx.restore();
+    }
     for(const [radius,color,width] of [[295,'#ff9abcbb',43],[212,'#ffc19dcc',34],[128,'#c59dffbb',27]]){ctx.beginPath();ctx.arc(540,425,radius,0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
     ctx.fillStyle='#ffccd3';ctx.textAlign='center';ctx.font='bold 95px Georgia, serif';ctx.fillText('♥',540,457);
     ctx.textAlign='left';drawFitted(ctx,'LOOP NIGHT',68,86,760,31,'800','#ffe8ea');ctx.textAlign='right';drawFitted(ctx,'24 · 10 · 2026',1013,86,450,25,'700','#ffe4df');ctx.textAlign='left';

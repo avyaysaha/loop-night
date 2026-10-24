@@ -39,3 +39,7 @@ The site is not affiliated with, sponsored by, or endorsed by Ed Sheeran, his ma
 ## GitHub push attempt
 
 At creation, the connected GitHub app could read `avyaysaha/pulse-interval-trainer` but rejected writes with `403 Resource not accessible by integration` for both file creation and branch creation. Therefore, this local package was **not automatically pushed**; the user needs to grant suitable repository contents write access or upload manually.
+
+## Photo filter update
+
+The Memories export shows uploaded photos at 80% opacity and reduces the pink bloom over them. Cards without photos keep their existing styling.
