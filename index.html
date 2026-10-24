@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111020" />
+  <meta name="description" content="Loop Night — an unofficial Ed Sheeran concert companion with sing-along, setlist bingo, a loop station and a personal souvenir." />
+  <title>LOOP NIGHT — Your concert, remixed</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="background-glow" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="logo" href="#home" aria-label="Loop Night home"><span class="logo-mark">◉</span><span>LOOP<span class="accent">NIGHT</span></span></a>
+    <div class="header-right"><span class="dot"></span> ARLINGTON · OCT 24 <span class="label-pill">UNOFFICIAL FAN APP</span></div>
+  </header>
+  <main>
+    <section class="screen" id="home" aria-labelledby="home-heading">
+      <div class="hero">
+        <div class="hero-copy"><div class="eyebrow">✦ TONIGHT IS YOURS <span class="dash"></span> ED SHEERAN · LOOP TOUR</div>
+          <h1 id="home-heading">Your concert.<br/><em>Your soundtrack.</em></h1>
+          <p>A little more magic for a night you'll remember. Sing every word, play along, make your own music, and keep the moment.</p>
+          <div class="hero-buttons"><button class="button primary" data-target="sing">Start singing <span>↗</span></button><button class="button secondary" data-target="bingo">Play song bingo <span>↗</span></button></div>
+          <div class="hero-badges"><span>◎ Mobile first</span><span>✦ No login</span><span>♫ Free to use</span></div>
+        </div>
+        <div class="hero-orbit" aria-hidden="true"><div class="orbit orbit-1"></div><div class="orbit orbit-2"></div><div class="orbit orbit-3"></div><div class="orbit orbit-4"></div><div class="orbit-heart">♥<small>PLAY IT LOUD</small></div><span class="orbit-word top">PLAY</span><span class="orbit-word bottom">LOOP</span><span class="sparkle s1">✳</span><span class="sparkle s2">✦</span></div>
+      </div>
+      <div class="event-banner"><span class="date-lockup">24<small>OCT</small></span><div><b>Ed Sheeran · LOOP Tour</b><p>AT&T Stadium · Arlington, Texas</p></div><span class="edition">TONIGHT'S EDITION</span></div>
+      <div class="section-header"><div><span class="eyebrow">THE EXPERIENCE</span><h2>How will you <em>play</em> tonight?</h2></div><p>Pick a little adventure. Switch any time.</p></div>
+      <div class="feature-grid">
+        <button class="feature sing-feature" data-target="sing"><span class="tiny">01 / SING</span><span class="feature-glyph">♫</span><strong>Sing it back.</strong><span class="feature-description">Your song, your words. Big lyrics, quick chorus jumps, and optional audio-cue assist.</span><span class="feature-link">Explore ↗</span></button>
+        <button class="feature bingo-feature" data-target="bingo"><span class="tiny">02 / PLAY</span><span class="feature-glyph">▦</span><strong>Make it bingo.</strong><span class="feature-description">25 squares. One unforgettable set. How many songs can you catch?</span><span class="feature-link">Play now ↗</span></button>
+        <button class="feature loop-feature" data-target="loop"><span class="tiny">03 / CREATE</span><span class="feature-glyph">◎</span><strong>Build a beat.</strong><span class="feature-description">Layer a kick, clap, hi-hat and melody. Your own pocket loop station.</span><span class="feature-link">Make a loop ↗</span></button>
+        <button class="feature memory-feature" data-target="memory"><span class="tiny">04 / REMEMBER</span><span class="feature-glyph">✳</span><strong>Keep the night.</strong><span class="feature-description">Your favorite song. Your best memory. One beautiful downloadable keepsake.</span><span class="feature-link">Create a card ↗</span></button>
+      </div>
+      <p class="disclaimer">A fan-made experience, unaffiliated with Ed Sheeran or his team. No copyrighted lyrics or music recordings are bundled.</p>
+    </section>
+    <section class="screen" id="sing" hidden aria-labelledby="sing-heading">
+      <div class="page-header"><span class="eyebrow">01 / THE WORDS</span><h1 id="sing-heading">Sing <em>along.</em></h1><p>Find a song, paste lyrics you have permission to use, and follow them with concert-friendly controls.</p></div>
+      <div class="split sing-split">
+        <div class="panel"><div class="panel-heading"><h2>Pick your song</h2><span class="eyebrow subtle">ED SHEERAN SONGS</span></div>
+          <label class="search-box"><span aria-hidden="true">⌕</span><input id="song-search" type="search" placeholder="Search songs..." aria-label="Search songs" /></label>
+          <div class="song-list" id="song-list" role="list" aria-label="Available songs"></div>
+          <div class="experimental-box"><div class="experimental-top"><span class="experimental-icon">◉</span><div><b>Audio-cue assist <span class="microtag">EXPERIMENTAL</span></b><p>Browser speech recognition may hear spoken song names; it cannot reliably identify concert music. Manual selection always works.</p></div><button class="button small secondary" id="listen-button">Try it</button></div><p class="muted tiny" id="listen-status" role="status">Off · Your microphone is not being used.</p><div id="song-suggestion" class="suggestion" hidden><span id="suggestion-copy"></span><button class="button small primary" id="accept-suggestion">Use song</button><button id="reject-suggestion" class="dismiss" aria-label="Dismiss suggestion">×</button></div></div>
+        </div>
+        <div class="panel lyric-panel"><div class="track-header"><div class="album-thumb">♫</div><div><span class="eyebrow">NOW SINGING</span><h2 id="now-song">Perfect</h2><p>Ed Sheeran</p></div><span class="signal">◖))</span></div>
+          <div class="lyric-stage" id="lyric-stage"><div class="lyric-placeholder" id="lyric-placeholder"><span>♪</span><h3>Your lyrics go here.</h3><p>To respect artists' rights, we don't provide song lyrics. Paste lyrics you can use privately; they'll remain in this browser.</p><button class="button secondary" id="empty-edit">Add my lyrics</button></div><div class="lyric-lines" id="lyric-lines" hidden></div></div>
+          <div class="transport"><button class="transport-side" id="previous-line" aria-label="Previous lyric line">←</button><button class="transport-main" id="play-lyrics" aria-label="Start auto-advance">▶</button><button class="transport-side" id="next-line" aria-label="Next lyric line">→</button></div>
+          <div class="lyric-shortcuts"><button class="text-link" id="jump-chorus">↗ Jump to chorus</button><button class="text-link" id="toggle-editor">✎ Add / edit lyrics</button></div>
+          <div class="slider-group"><label>Text size <input id="font-size" type="range" min="20" max="40" value="28" step="2" /></label><label>Seconds / line <input id="line-delay" type="range" min="2" max="10" value="5" step="1" /><output id="delay-output">5s</output></label></div>
+          <div class="editor" id="lyric-editor" hidden><label for="lyric-input">Paste your own permitted lyrics</label><p>Use one line per row. Place <code>[chorus]</code> above any chorus so the jump button works.</p><textarea id="lyric-input" rows="9" placeholder="[verse]&#10;Your first line&#10;Your next line&#10;&#10;[chorus]&#10;Your chorus line"></textarea><div class="button-row"><button class="button primary small" id="save-lyrics">Save on device</button><button class="button quiet small" id="clear-lyrics">Clear lyrics</button></div></div>
+          <a class="official-link" id="lyric-video-link" href="https://www.youtube.com/results?search_query=Ed+Sheeran+official+lyric+video" target="_blank" rel="noopener noreferrer">Find an official lyric video ↗</a>
+        </div>
+      </div>
+    </section>
+    <section class="screen" id="bingo" hidden aria-labelledby="bingo-heading"><div class="page-header"><span class="eyebrow">02 / THE GAME</span><h1 id="bingo-heading">Setlist <em>bingo.</em></h1><p>Mark a square when Ed plays a song. Five in a row wins. These are possibilities, not a confirmed setlist.</p></div>
+      <div class="bingo-board"><div class="bingo-head"><div><span class="eyebrow">YOUR BINGO CARD</span><h2>Every song is a moment.</h2></div><div class="bingo-counter"><b id="bingo-count">0 / 24</b><span>SONGS MARKED</span></div></div><div class="bingo-letters"><span>L</span><span>O</span><span>O</span><span>P</span><span>!</span></div><div class="bingo-grid" id="bingo-grid"></div><div class="bingo-footer"><span id="bingo-message" role="status">Your card is ready. Let the show begin!</span><div class="button-row"><button class="button small secondary" id="regenerate-bingo">↻ New card</button><button class="button small quiet" id="reset-bingo">Clear marks</button></div></div></div>
+    </section>
+    <section class="screen" id="loop" hidden aria-labelledby="loop-heading"><div class="page-header"><span class="eyebrow">03 / THE MUSIC</span><h1 id="loop-heading">Make your <em>own loop.</em></h1><p>Four layers. One little groove. Tap pads to build your mix, then play it. Sounds are synthesized on your device.</p></div>
+      <div class="split"><div class="panel looper"><div class="looper-top"><span>THE POCKET LOOP STATION</span><span id="loop-status">● STOPPED</span></div><div class="loop-circles" id="loop-circles"><div class="circle one"></div><div class="circle two"></div><div class="circle three"></div><div class="circle-center">◎<small>YOUR LOOP</small></div></div><div class="beat-grid" id="beat-grid"></div><button class="button primary full" id="loop-play">▶ Play your loop</button></div>
+        <div class="panel"><div class="panel-heading"><h2>Mix your layers</h2><span class="eyebrow subtle">TAP TO TOGGLE</span></div><div class="pads"><button class="pad enabled" data-layer="kick" aria-pressed="true"><span>◉</span><b>Kick</b><small>The heartbeat</small></button><button class="pad enabled" data-layer="clap" aria-pressed="true"><span>✴</span><b>Clap</b><small>The backbeat</small></button><button class="pad enabled" data-layer="hat" aria-pressed="true"><span>✧</span><b>Hi-hat</b><small>The sparkle</small></button><button class="pad" data-layer="melody" aria-pressed="false"><span>♫</span><b>Melody</b><small>The finishing touch</small></button></div><label class="tempo-label" for="tempo">Tempo <b><output id="tempo-display">96</output> BPM</b></label><input class="tempo-input" id="tempo" type="range" min="70" max="140" step="2" value="96"/><div class="tempo-labels"><span>SLOW</span><span>FAST</span></div><p class="sound-fineprint">Headphones recommended. These are original generated tones, not recordings of Ed Sheeran's music. Remember to keep the volume considerate.</p></div></div>
+    </section>
+    <section class="screen" id="memory" hidden aria-labelledby="memory-heading"><div class="page-header"><span class="eyebrow">04 / THE MEMORY</span><h1 id="memory-heading">Keep this <em>feeling.</em></h1><p>Your best moment, captured in a personalized downloadable keepsake. Photos never leave your browser.</p></div>
+      <div class="split memory-split"><div class="panel"><h2>Your night, your story.</h2><div class="form-fields"><label>YOUR NAME<input id="memory-name" maxlength="42" placeholder="Optional"/></label><label>THE VENUE<input id="memory-venue" maxlength="60" value="AT&T Stadium · Arlington, TX"/></label><label>FAVORITE SONG<select id="memory-song"></select></label><label>THE MOMENT I'LL REMEMBER<textarea id="memory-note" maxlength="160" rows="3" placeholder="The crowd singing together. That one perfect chorus..."></textarea></label><label>PHOTO (OPTIONAL)<input id="memory-photo" type="file" accept="image/png,image/jpeg,image/webp,image/heic,image/heif"/></label></div><p class="muted tiny" id="photo-status">Photos are handled locally and never uploaded.</p><div class="button-row"><button class="button primary" id="download-memory">↓ Download souvenir</button><button class="button secondary" id="share-memory">↗ Share</button></div></div><div class="memory-card" id="memory-card" aria-label="Keepsake preview"><div class="card-top"><span>LOOP NIGHT</span><span>01 / 01</span></div><div class="card-art"><div class="mini-orbit a"></div><div class="mini-orbit b"></div><span>♥</span></div><h2>I WAS<br/><em>THERE.</em></h2><hr/><b id="preview-song">PERFECT · ED SHEERAN</b><span id="preview-venue">AT&T STADIUM · ARLINGTON, TX</span><span>24 OCTOBER 2026</span><div class="card-foot"><span>YOUR NIGHT. YOUR SOUNDTRACK.</span><span>✦</span></div></div></div>
+    </section>
+  </main>
+  <nav class="bottom-nav" aria-label="Main navigation"><button data-target="home" class="selected" aria-current="page"><span>⌂</span>Home</button><button data-target="sing"><span>♫</span>Sing</button><button data-target="bingo"><span>▦</span>Bingo</button><button data-target="loop"><span>◎</span>Loop</button><button data-target="memory"><span>✳</span>Memory</button></nav>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>
