@@ -335,11 +335,29 @@
     if(line)lines.push(line);
     lines.slice(0,maxLines).forEach((item,i)=> ctx.fillText(i===maxLines-1 && lines.length>maxLines ? item+'…':item,x,y+i*lineHeight));
   }
+  // Souvenir look: adjust these four values to fine-tune the design.
+  const SOUVENIR_ART_OPACITY = 0.15;       // Circle rings + heart: 0 = invisible, 1 = fully visible.
+  const SOUVENIR_PHOTO_OPACITY = 0.80;     // Uploaded photo visibility.
+  const SOUVENIR_TOUR_PINK = '#D73F82';   // Dominant pink sampled from the Loop Tour poster.
+  const SOUVENIR_PINK_OVERLAY_OPACITY = 0.34; // Pink tint over the ENTIRE uploaded photo.
   // Draw to the on-page preview canvas AND the exported PNG from one shared renderer.
   async function drawCard(canvas) {
     const ctx=canvas.getContext('2d'); if(!ctx) throw new Error('Canvas unavailable');
     let bg=ctx.createLinearGradient(0,0,1080,1350);bg.addColorStop(0,'#221b48');bg.addColorStop(.45,'#8b437d');bg.addColorStop(1,'#18182d');ctx.fillStyle=bg;ctx.fillRect(0,0,1080,1350);
-    if(photoImage) {const scale=Math.max(1080/photoImage.width,780/photoImage.height);const w=photoImage.width*scale,h=photoImage.height*scale;ctx.save();ctx.globalAlpha=.80;ctx.drawImage(photoImage,(1080-w)/2,60+(780-h)/2,w,h);ctx.restore();}
+    if(photoImage) {
+      const photoY=60, photoHeight=780;
+      const scale=Math.max(1080/photoImage.width,photoHeight/photoImage.height);
+      const w=photoImage.width*scale, h=photoImage.height*scale;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0,photoY,1080,photoHeight); ctx.clip();
+      ctx.globalAlpha=SOUVENIR_PHOTO_OPACITY;
+      ctx.drawImage(photoImage,(1080-w)/2,photoY+(photoHeight-h)/2,w,h);
+      // Match the Loop Tour poster's pink across every visible part of the uploaded photo.
+      ctx.globalAlpha=SOUVENIR_PINK_OVERLAY_OPACITY;
+      ctx.fillStyle=SOUVENIR_TOUR_PINK;
+      ctx.fillRect(0,photoY,1080,photoHeight);
+      ctx.restore();
+    }
     const bloom=ctx.createRadialGradient(540,430,40,540,430,510);bloom.addColorStop(0,photoImage ? '#ff8bae30' : '#ff8bae77');bloom.addColorStop(1,'#ff8bae00');ctx.fillStyle=bloom;ctx.fillRect(0,0,1080,1000);
     if (!loopTourPoster) await loopTourPosterReady;
     if(loopTourPoster) {
@@ -354,7 +372,7 @@
       posterFade.addColorStop(1,'rgba(24,24,45,0.10)');
       ctx.fillStyle=posterFade; ctx.fillRect(0,posterY,1080,posterH); ctx.restore();
     }
-    ctx.save(); ctx.globalAlpha=.15; // 15% opacity for the rings and heart only.
+    ctx.save(); ctx.globalAlpha=SOUVENIR_ART_OPACITY; // Change the constant above to adjust rings + heart.
     for(const [radius,color,width] of [[295,'#ff9abcbb',43],[212,'#ffc19dcc',34],[128,'#c59dffbb',27]]){ctx.beginPath();ctx.arc(540,425,radius,0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
     ctx.fillStyle='#ffccd3';ctx.textAlign='center';ctx.font='bold 95px Georgia, serif';ctx.fillText('♥',540,457); ctx.restore();
     ctx.textAlign='left';drawFitted(ctx,'LOOP NIGHT',68,86,760,31,'800','#ffe8ea');
