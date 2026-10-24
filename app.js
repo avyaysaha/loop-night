@@ -331,7 +331,7 @@
     const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;
     const ctx=canvas.getContext('2d'); if(!ctx) throw new Error('Canvas unavailable');
     let bg=ctx.createLinearGradient(0,0,1080,1350);bg.addColorStop(0,'#221b48');bg.addColorStop(.45,'#8b437d');bg.addColorStop(1,'#18182d');ctx.fillStyle=bg;ctx.fillRect(0,0,1080,1350);
-    if(photoImage) {const scale=Math.max(1080/photoImage.width,780/photoImage.height);const w=photoImage.width*scale,h=photoImage.height*scale;ctx.save();ctx.globalAlpha=.55;ctx.drawImage(photoImage,(1080-w)/2,60+(780-h)/2,w,h);ctx.restore();}
+    if(photoImage) {const scale=Math.max(1080/photoImage.width,780/photoImage.height);const w=photoImage.width*scale,h=photoImage.height*scale;ctx.save();ctx.globalAlpha=.15;ctx.drawImage(photoImage,(1080-w)/2,60+(780-h)/2,w,h);ctx.restore();}
     const bloom=ctx.createRadialGradient(540,430,40,540,430,510);bloom.addColorStop(0,'#ff8bae77');bloom.addColorStop(1,'#ff8bae00');ctx.fillStyle=bloom;ctx.fillRect(0,0,1080,1000);
     for(const [radius,color,width] of [[295,'#ff9abcbb',43],[212,'#ffc19dcc',34],[128,'#c59dffbb',27]]){ctx.beginPath();ctx.arc(540,425,radius,0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
     ctx.fillStyle='#ffccd3';ctx.textAlign='center';ctx.font='bold 95px Georgia, serif';ctx.fillText('♥',540,457);
