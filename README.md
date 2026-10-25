@@ -48,3 +48,21 @@ The Memories export shows uploaded photos at 80% opacity and reduces the pink bl
 ## Souvenir update
 
 The Memories screen now shows a **live on-page preview** rendered using the exact same canvas drawing function as the PNG export. Your chosen photo and editable text appear immediately; no uploads occur. The Loop Tour poster is restricted to the bottom portion at 55% draw opacity, with the circles and heart at 15%. All souvenir labels are left-aligned, and the former “Your night · Your soundtrack” footer has been removed.
+
+
+## Souvenir tint update
+
+The souvenir live preview and PNG export are drawn by the same `drawCard` function.
+Adjust the `SOUVENIR_ART_OPACITY`, `SOUVENIR_PHOTO_OPACITY`, `SOUVENIR_TOUR_PINK` and `SOUVENIR_PINK_OVERLAY_OPACITY` constants in `app.js` to fine-tune the look. The pink `#D73F82` is a representative dominant color sampled from the supplied Loop Tour poster. The tint is applied uniformly to the uploaded photo, not to the entire souvenir. The Loop Tour branding artwork stays in the bottom half.
+
+
+### Seamless photo-to-poster transition
+
+The uploaded souvenir photo and the Loop Tour poster now use separate feathered alpha masks,
+with a soft pink transition band between them. No hard top edge is visible on the lower
+poster. The setting `SOUVENIR_TOUR_POSTER_OPACITY = 0.55` controls the image's peak opacity,
+while `SOUVENIR_ART_OPACITY = 0.15` continues to control the circles and heart.
+The live canvas preview and downloaded PNG use the same `drawCard()` function.
+
+To deploy, replace `app.js`, `styles.css`, and `sw.js` in GitHub and refresh the site;
+all other included files are unchanged.

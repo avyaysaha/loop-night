@@ -8,7 +8,7 @@
 .hero-poster::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(17,16,32,.05),rgba(17,16,32,.18) 55%,rgba(17,16,32,.34)),linear-gradient(135deg,rgba(255,120,170,.16),rgba(0,0,0,0) 58%);pointer-events:none;}
 .memory-card{position:relative;isolation:isolate;}
 .memory-card>*{position:relative;z-index:1;}
-.card-poster{position:absolute;left:0;right:0;bottom:0;height:48%;z-index:0;background:linear-gradient(to top,rgba(23,22,46,.18),rgba(23,22,46,.58) 32%,rgba(23,22,46,.97) 100%),url('./loop-tour.jpg') center bottom/cover no-repeat;opacity:.52;pointer-events:none;}
+.card-poster{position:absolute;left:0;right:0;bottom:0;height:48%;z-index:0;background:linear-gradient(to top,rgba(23,22,46,.18),rgba(23,22,46,.58) 32%,rgba(23,22,46,.97) 100%),url('./loop-tour.jpg') center bottom/cover no-repeat;opacity:.55;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.12) 18%,rgba(0,0,0,.68) 54%,black 82%);mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.12) 18%,rgba(0,0,0,.68) 54%,black 82%);pointer-events:none;}
 .card-foot{position:relative;z-index:2;}
 @media(max-width:720px){.hero-poster{order:1;max-width:265px;max-height:265px;margin:0 auto 14px}.card-poster{height:46%}}
 

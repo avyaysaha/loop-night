@@ -340,38 +340,77 @@
   const SOUVENIR_PHOTO_OPACITY = 0.80;     // Uploaded photo visibility.
   const SOUVENIR_TOUR_PINK = '#D73F82';   // Dominant pink sampled from the Loop Tour poster.
   const SOUVENIR_PINK_OVERLAY_OPACITY = 0.34; // Pink tint over the ENTIRE uploaded photo.
+  const SOUVENIR_TOUR_POSTER_OPACITY = 0.55;  // Maximum poster visibility in the lower half.
+  // Both photos are blended with gradual transparency masks, not hard-edged crops.
   // Draw to the on-page preview canvas AND the exported PNG from one shared renderer.
   async function drawCard(canvas) {
     const ctx=canvas.getContext('2d'); if(!ctx) throw new Error('Canvas unavailable');
     let bg=ctx.createLinearGradient(0,0,1080,1350);bg.addColorStop(0,'#221b48');bg.addColorStop(.45,'#8b437d');bg.addColorStop(1,'#18182d');ctx.fillStyle=bg;ctx.fillRect(0,0,1080,1350);
     if(photoImage) {
-      const photoY=60, photoHeight=780;
+      // Compose the visitor's image offscreen and soften its lower edge so the
+      // Loop Tour art can emerge naturally underneath, without a visible seam.
+      const photoY=50, photoHeight=900;
+      const photoLayer=document.createElement('canvas');
+      photoLayer.width=1080; photoLayer.height=photoHeight;
+      const photoCtx=photoLayer.getContext('2d');
       const scale=Math.max(1080/photoImage.width,photoHeight/photoImage.height);
       const w=photoImage.width*scale, h=photoImage.height*scale;
-      ctx.save();
-      ctx.beginPath(); ctx.rect(0,photoY,1080,photoHeight); ctx.clip();
-      ctx.globalAlpha=SOUVENIR_PHOTO_OPACITY;
-      ctx.drawImage(photoImage,(1080-w)/2,photoY+(photoHeight-h)/2,w,h);
-      // Match the Loop Tour poster's pink across every visible part of the uploaded photo.
-      ctx.globalAlpha=SOUVENIR_PINK_OVERLAY_OPACITY;
-      ctx.fillStyle=SOUVENIR_TOUR_PINK;
-      ctx.fillRect(0,photoY,1080,photoHeight);
-      ctx.restore();
+      photoCtx.drawImage(photoImage,(1080-w)/2,(photoHeight-h)/2,w,h);
+      photoCtx.fillStyle=SOUVENIR_TOUR_PINK;
+      photoCtx.globalAlpha=SOUVENIR_PINK_OVERLAY_OPACITY;
+      photoCtx.fillRect(0,0,1080,photoHeight);
+      // Alpha mask: retain the face and upper photo; dissolve its bottom edge.
+      photoCtx.globalAlpha=1;
+      photoCtx.globalCompositeOperation='destination-in';
+      const photoMask=photoCtx.createLinearGradient(0,0,0,photoHeight);
+      photoMask.addColorStop(0,'rgba(0,0,0,.85)');
+      photoMask.addColorStop(.12,'rgba(0,0,0,1)');
+      photoMask.addColorStop(.67,'rgba(0,0,0,1)');
+      photoMask.addColorStop(.82,'rgba(0,0,0,.70)');
+      photoMask.addColorStop(1,'rgba(0,0,0,0)');
+      photoCtx.fillStyle=photoMask;
+      photoCtx.fillRect(0,0,1080,photoHeight);
+      ctx.save(); ctx.globalAlpha=SOUVENIR_PHOTO_OPACITY;
+      ctx.drawImage(photoLayer,0,photoY); ctx.restore();
     }
     const bloom=ctx.createRadialGradient(540,430,40,540,430,510);bloom.addColorStop(0,photoImage ? '#ff8bae30' : '#ff8bae77');bloom.addColorStop(1,'#ff8bae00');ctx.fillStyle=bloom;ctx.fillRect(0,0,1080,1000);
     if (!loopTourPoster) await loopTourPosterReady;
+    // Gentle pink color bridge underneath the artwork: the tour image blends
+    // into the photograph's pink filter rather than appearing as a pasted block.
+    const bridge=ctx.createLinearGradient(0,590,0,1260);
+    bridge.addColorStop(0,SOUVENIR_TOUR_PINK + '00');
+    bridge.addColorStop(.52,SOUVENIR_TOUR_PINK + '21');
+    bridge.addColorStop(1,SOUVENIR_TOUR_PINK + '12');
+    ctx.fillStyle=bridge; ctx.fillRect(0,590,1080,760);
     if(loopTourPoster) {
-      const posterY=740, posterH=610; const scale=Math.max(1080/loopTourPoster.width,posterH/loopTourPoster.height);
-      const w=loopTourPoster.width*scale,h=loopTourPoster.height*scale;
-      ctx.save(); ctx.beginPath(); ctx.rect(0,posterY,1080,posterH); ctx.clip();
-      ctx.globalAlpha=.55; ctx.drawImage(loopTourPoster,(1080-w)/2,posterY+(posterH-h)/2,w,h);
-      const posterFade=ctx.createLinearGradient(0,posterY,0,posterY+posterH);
-      posterFade.addColorStop(0,'rgba(24,24,45,0.98)');
-      posterFade.addColorStop(.23,'rgba(24,24,45,0.76)');
-      posterFade.addColorStop(.56,'rgba(24,24,45,0.34)');
-      posterFade.addColorStop(1,'rgba(24,24,45,0.10)');
-      ctx.fillStyle=posterFade; ctx.fillRect(0,posterY,1080,posterH); ctx.restore();
+      // Image occupies the lower half, but its top is gradually revealed across
+      // 300+ pixels using an alpha mask, with NO hard crop at its top edge.
+      const posterY=655, posterH=695;
+      const posterLayer=document.createElement('canvas');
+      posterLayer.width=1080; posterLayer.height=posterH;
+      const posterCtx=posterLayer.getContext('2d');
+      const scale=Math.max(1080/loopTourPoster.width,posterH/loopTourPoster.height);
+      const w=loopTourPoster.width*scale, h=loopTourPoster.height*scale;
+      posterCtx.drawImage(loopTourPoster,(1080-w)/2,(posterH-h)/2,w,h);
+      posterCtx.globalCompositeOperation='destination-in';
+      const posterMask=posterCtx.createLinearGradient(0,0,0,posterH);
+      posterMask.addColorStop(0,'rgba(0,0,0,0)');
+      posterMask.addColorStop(.16,'rgba(0,0,0,.05)');
+      posterMask.addColorStop(.34,'rgba(0,0,0,.26)');
+      posterMask.addColorStop(.54,'rgba(0,0,0,.70)');
+      posterMask.addColorStop(.74,'rgba(0,0,0,1)');
+      posterMask.addColorStop(1,'rgba(0,0,0,1)');
+      posterCtx.fillStyle=posterMask;
+      posterCtx.fillRect(0,0,1080,posterH);
+      ctx.save();ctx.globalAlpha=SOUVENIR_TOUR_POSTER_OPACITY;
+      ctx.drawImage(posterLayer,0,posterY);ctx.restore();
     }
+    // A subtle darker foundation keeps white souvenir lettering legible.
+    const typeContrast=ctx.createLinearGradient(0,770,0,1350);
+    typeContrast.addColorStop(0,'rgba(19,15,36,0)');
+    typeContrast.addColorStop(.65,'rgba(19,15,36,.16)');
+    typeContrast.addColorStop(1,'rgba(19,15,36,.28)');
+    ctx.fillStyle=typeContrast;ctx.fillRect(0,770,1080,580);
     ctx.save(); ctx.globalAlpha=SOUVENIR_ART_OPACITY; // Change the constant above to adjust rings + heart.
     for(const [radius,color,width] of [[295,'#ff9abcbb',43],[212,'#ffc19dcc',34],[128,'#c59dffbb',27]]){ctx.beginPath();ctx.arc(540,425,radius,0,Math.PI*2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
     ctx.fillStyle='#ffccd3';ctx.textAlign='center';ctx.font='bold 95px Georgia, serif';ctx.fillText('♥',540,457); ctx.restore();
