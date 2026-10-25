@@ -66,3 +66,14 @@ The live canvas preview and downloaded PNG use the same `drawCard()` function.
 
 To deploy, replace `app.js`, `styles.css`, and `sw.js` in GitHub and refresh the site;
 all other included files are unchanged.
+
+
+## Sing Along (updated)
+
+- All 43 songs can open a targeted YouTube search for an official lyric video. Four specific videos have verified direct Ed Sheeran Official Artist Channel links (Shape of You, Thinking Out Loud, Shivers, Castle on the Hill).
+- Paste lyrics you have permission to use, or import one or more `.lrc` / `.txt` files, using the song title as filename (e.g. `Perfect.lrc`). For a single file without a recognizable name, it loads into the currently selected song.
+- `.lrc` files with `[mm:ss.xx]` timestamp markers auto-highlight the correct line while playing and support seek, 3-second nudges, and manual line synchronization. Plain text uses the interval slider and previous/next buttons.
+- Include `[chorus]` on its own line to enable Jump to Chorus.
+- Imported lyrics are stored only in local browser storage; the site does not transmit or publish lyrics. Not all browsers can import every text encoding.
+- The original demo text in Try Demo is not Ed Sheeran lyrics. Automatic microphone-based song matching remains experimental speech-title recognition only.
+- Displaying complete commercial lyrics in a publicly distributed application requires appropriate permission or a licensed lyrics API. No unlicensed copyrighted lyrics are bundled.

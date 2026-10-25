@@ -19,3 +19,18 @@
 #memory-preview-canvas{width:100%;height:auto;aspect-ratio:4/5;display:block;border-radius:20px;border:1px solid #f3b1cb66;box-shadow:0 30px 60px #06040f85;background:#302044}
 .souvenir-preview-caption{text-align:center;color:#b5a8c3;font-size:11px;line-height:1.6;margin-top:15px}
 @media(max-width:720px){.souvenir-preview-panel{position:relative;top:auto;width:min(100%,370px)}}
+
+/* Sing Along: instant video links, local file import and timed LRC controls */
+.sing-quickstart{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0 5px;align-items:center;}
+.lyrics-rights{font-size:11px;line-height:1.55;color:#a99ab9;margin:8px 0 10px;}
+.mode-banner{font-size:10px;font-weight:850;letter-spacing:.12em;color:#ffd0b8;padding:10px 13px;background:rgba(255,182,147,.09);border:1px solid rgba(255,182,147,.22);border-radius:11px;margin-bottom:13px;}
+.timed-controls{padding:13px 0 18px;border-bottom:1px solid var(--stroke);}
+.timed-controls[hidden]{display:none!important}
+.timed-head{display:flex;justify-content:space-between;gap:12px;color:#ffcad7;font-size:10px;font-weight:850;letter-spacing:.08em}
+#timed-seek{width:100%;accent-color:var(--pink);margin:15px 0 9px}
+.timed-buttons{display:flex;justify-content:space-between;gap:7px;align-items:center;}
+.timed-buttons span{font-size:10px;line-height:1.4;color:#b9aac7;text-align:center}
+.lyric-line{cursor:pointer}
+.lyric-line:hover{opacity:.7}
+.lyric-line.current:hover{opacity:1}
+@media(max-width:720px){.sing-quickstart{gap:6px}.sing-quickstart .button{flex:1}.timed-buttons span{font-size:9px}}

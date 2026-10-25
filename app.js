@@ -56,102 +56,229 @@
     img.onerror = () => resolve(null);
     img.src = './loop-tour.jpg';
   });
-  let lyricTimer = null;
+  // Direct links only for official artist lyric videos that were individually verified.
+  // Other songs open a YouTube search (not an unverified video link).
+  const OFFICIAL_LYRIC_VIDEOS = {
+    'Shape of You': 'https://www.youtube.com/watch?v=_dK2tDK9grQ',
+    'Thinking Out Loud': 'https://www.youtube.com/watch?v=Q5z6RHIpi2Y',
+    'Shivers': 'https://www.youtube.com/watch?v=z2_Lrg6rRks',
+    'Castle on the Hill': 'https://www.youtube.com/watch?v=7Qp5vcuMIlk'
+  };
+  const DEMO_LYRICS = `[verse]
+Beneath the lights we come alive
+Together for a night like this
+[chorus]
+Let the music take us higher
+Every heartbeat finds its rhythm
+[verse]
+Sing it out beneath the stars
+[chorus]
+Hold this moment in the air`;
+  let lyricTimer = null, lyricFrame = null;
+  let lyricElapsed = 0, lyricClockStart = 0, lastClockDraw = 0;
+  let demoActive = false;
   const lyricsKey = (name) => 'lyrics:' + name;
+  const normalizedName = (name) => name.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,'').replace(/[^a-z0-9]+/g,'');
   function showSongList(filter = '') {
-    const query = filter.trim().toLowerCase();
-    const list = $('song-list'); list.replaceChildren();
-    const matches = SONGS.filter((name) => name.toLowerCase().includes(query));
-    if (!matches.length) {
-      const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'No matching songs.'; list.append(p); return;
-    }
-    matches.forEach((name) => {
-      const item = document.createElement('button'); item.type = 'button';
-      item.className = 'song-option' + (song === name ? ' active' : '');
-      item.setAttribute('aria-pressed', String(song === name));
-      const label = document.createElement('span'); label.textContent = String(SONGS.indexOf(name) + 1).padStart(2, '0');
-      item.append(document.createTextNode(name), label);
-      item.addEventListener('click', () => selectSong(name)); list.append(item);
+    const query=filter.trim().toLowerCase();
+    const list=$('song-list'); list.replaceChildren();
+    const matches=SONGS.filter(name=>name.toLowerCase().includes(query));
+    if(!matches.length){const p=document.createElement('p');p.className='muted';p.textContent='No matching songs.';list.append(p);return;}
+    matches.forEach(name=>{
+      const item=document.createElement('button');item.type='button';
+      item.className='song-option'+(song===name?' active':'');
+      item.setAttribute('aria-pressed',String(song===name));
+      const hasLyrics=!!safeGet(lyricsKey(name),'');
+      const label=document.createElement('span'); label.textContent=hasLyrics?'✓ SAVED':String(SONGS.indexOf(name)+1).padStart(2,'0');
+      item.append(document.createTextNode(name),label);
+      item.addEventListener('click',()=>selectSong(name));list.append(item);
     });
   }
   function parseLyrics(source) {
-    let isChorus = false;
-    return source.split(/\r?\n/).map((line) => line.trim()).flatMap((line) => {
-      if (/^\[chorus\]$/i.test(line)) { isChorus = true; return []; }
-      if (/^\[(verse|bridge|intro|outro|pre-chorus|instrumental)(?:\s*\d+)?\]$/i.test(line)) { isChorus = false; return []; }
-      if (!line) return [];
-      const result = { text:line, chorusStart:isChorus };
-      isChorus = false;
-      return [result];
-    });
+    let chorusNext=false, offsetMs=0; const lines=[];
+    for(const raw of source.split(/\r?\n/)){
+      const line=raw.trim(); if(!line)continue;
+      const section=line.match(/^\[(chorus|verse|bridge|intro|outro|pre-chorus|instrumental)(?:\s*\d+)?\]$/i);
+      if(section){chorusNext=section[1].toLowerCase()==='chorus';continue;}
+      const offset=line.match(/^\[offset:\s*([+-]?\d+)\]$/i);
+      if(offset){offsetMs=Number(offset[1]);continue;}
+      if(/^\[(?:ar|ti|al|by|length|re|ve):.*\]$/i.test(line))continue;
+      const timePattern=/\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+      const tags=[...line.matchAll(timePattern)];
+      const text=line.replace(timePattern,'').trim();
+      if(!text)continue;
+      if(tags.length){
+        for(const tag of tags){
+          const mins=Number(tag[1]),secs=Number(tag[2]), fraction=tag[3]||'';
+          if(secs>59)continue;
+          const time=Math.max(0,mins*60+secs+(fraction?Number(fraction)/10**fraction.length:0)+offsetMs/1000);
+          lines.push({text,chorusStart:chorusNext,time});
+        }
+      }else if(!/^\[.*\]$/.test(line))lines.push({text,chorusStart:chorusNext,time:null});
+      chorusNext=false;
+    }
+    if(lines.some(line=>line.time!==null))return lines.filter(line=>line.time!==null).sort((a,b)=>a.time-b.time);
+    return lines;
   }
-  function selectSong(next) {
-    if (!SONGS.includes(next)) return;
-    stopLyrics(); song = next; safeSet('song', song);
-    $('now-song').textContent = song;
-    $('lyric-video-link').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Ed Sheeran ' + song + ' official lyric video');
-    $('lyric-editor').hidden = true;
-    $('lyric-input').value = safeGet(lyricsKey(song), '') || '';
-    parsedLyrics = parseLyrics($('lyric-input').value);
-    lineIndex = 0; showSongList($('song-search').value); renderLyrics();
+  const lyricsTimed=()=>parsedLyrics.length>0&&parsedLyrics.some(line=>line.time!==null);
+  const songEnd=()=>parsedLyrics.length?parsedLyrics[parsedLyrics.length-1].time+10:0;
+  const clockText=(n)=>`${Math.floor(n/60)}:${String(Math.floor(n%60)).padStart(2,'0')}`;
+  function updateTimeline(){
+    if(!lyricsTimed())return;
+    const duration=songEnd();
+    $('timed-clock').textContent=clockText(lyricElapsed)+' / '+clockText(duration);
+    $('timed-seek').max=String(duration);
+    $('timed-seek').value=String(Math.min(duration,lyricElapsed));
   }
-  function renderLyrics() {
-    $('lyric-placeholder').hidden = parsedLyrics.length > 0;
-    const target = $('lyric-lines'); target.hidden = !parsedLyrics.length;
-    target.replaceChildren();
-    parsedLyrics.forEach(({text, chorusStart}, i) => {
-      const row = document.createElement('div');
-      row.className = 'lyric-line' + (lineIndex === i ? ' current' : '') + (chorusStart ? ' chorus' : '');
-      row.textContent = text; row.style.setProperty('--font-size', $('font-size').value + 'px');
-      row.addEventListener('click', () => { lineIndex = i; renderLyrics(); });
+  function closestTimedIndex(t){
+    let index=0;
+    for(let i=0;i<parsedLyrics.length;i++){
+      if(parsedLyrics[i].time<=t+0.025)index=i;
+      else break;
+    }
+    return index;
+  }
+  function seekLyrics(time){
+    if(!lyricsTimed())return;
+    lyricElapsed=Math.max(0,Math.min(time,songEnd()));
+    lyricClockStart=performance.now()-lyricElapsed*1000;
+    lineIndex=closestTimedIndex(lyricElapsed);
+    updateTimeline();renderLyrics();
+  }
+  function selectSong(next){
+    if(!SONGS.includes(next))return;
+    stopLyrics();song=next;safeSet('song',song);
+    $('now-song').textContent=song;
+    const link=$('lyric-video-link');
+    const official=OFFICIAL_LYRIC_VIDEOS[song];
+    link.href=official||'https://www.youtube.com/results?search_query='+encodeURIComponent('Ed Sheeran '+song+' official lyric video');
+    link.textContent=official?'▶ Open official lyric video ↗':'⌕ Search official lyric video ↗';
+    $('lyric-editor').hidden=true;
+    $('lyric-input').value=safeGet(lyricsKey(song),'')||'';
+    demoActive=false;
+    parsedLyrics=parseLyrics($('lyric-input').value);
+    lyricElapsed=0;lineIndex=0;
+    showSongList($('song-search').value);renderLyrics();
+  }
+  function renderLyrics(){
+    const hasLyrics=parsedLyrics.length>0, timed=lyricsTimed();
+    $('lyric-placeholder').hidden=hasLyrics;
+    $('lyric-lines').hidden=!hasLyrics;
+    $('timed-controls').hidden=!timed;
+    $('line-delay').disabled=timed;
+    $('delay-output').textContent=timed?'LRC':$('line-delay').value+'s';
+    $('lyric-mode-tag').textContent=demoActive?'DEMO · Original sample, not Ed Sheeran lyrics':timed?'SYNCED .LRC · Tap a line to resync':hasLyrics?'MANUAL LYRICS · Use arrows or auto-scroll':'NO LYRICS STORED · Official video or import';
+    const target=$('lyric-lines'); target.replaceChildren();
+    parsedLyrics.forEach(({text,chorusStart},i)=>{
+      const row=document.createElement('div');
+      row.className='lyric-line'+(lineIndex===i?' current':'')+(chorusStart?' chorus':'');
+      row.textContent=text;row.style.setProperty('--font-size',$('font-size').value+'px');
+      row.addEventListener('click',()=>{
+        if(timed)seekLyrics(parsedLyrics[i].time);
+        else {lineIndex=i;renderLyrics();}
+      });
       target.append(row);
     });
-    const current = target.children[lineIndex];
-    if (current) current.scrollIntoView({block:'center', behavior:'smooth'});
+    if(timed)updateTimeline();
+    const current=target.children[lineIndex];
+    if(current){
+      const stage=$('lyric-stage');
+      const center=current.offsetTop-stage.offsetTop-stage.clientHeight/2+current.clientHeight/2;
+      stage.scrollTo({top:Math.max(0,center),behavior:'smooth'});
+    }
   }
-  function stopLyrics() {
-    if (lyricTimer !== null) { clearInterval(lyricTimer); lyricTimer = null; }
-    $('play-lyrics').textContent = '▶'; $('play-lyrics').setAttribute('aria-label', 'Start auto-advance');
+  function stopLyrics(){
+    if(lyricTimer!==null){clearInterval(lyricTimer);lyricTimer=null;}
+    if(lyricFrame!==null){cancelAnimationFrame(lyricFrame);lyricFrame=null;}
+    $('play-lyrics').textContent='▶';$('play-lyrics').setAttribute('aria-label','Start auto-advance');
   }
-  function advanceLyrics(delta) {
-    if (!parsedLyrics.length) { toast('Add your own permitted lyrics first.'); return; }
-    lineIndex = Math.max(0, Math.min(parsedLyrics.length - 1, lineIndex + delta));
+  function advanceLyrics(delta){
+    if(!parsedLyrics.length){toast('Use an official lyric video or import permitted lyrics first.');return;}
+    lineIndex=Math.max(0,Math.min(parsedLyrics.length-1,lineIndex+delta));
+    if(lyricsTimed()){
+      lyricElapsed=parsedLyrics[lineIndex].time;
+      lyricClockStart=performance.now()-lyricElapsed*1000;
+    }
     renderLyrics();
-    if (lineIndex === parsedLyrics.length - 1 && delta > 0) stopLyrics();
+    if(!lyricsTimed()&&lineIndex===parsedLyrics.length-1&&delta>0)stopLyrics();
   }
-  function startLyrics() {
-    if (!parsedLyrics.length) { $('lyric-editor').hidden = false; toast('Add your lyrics to start following along.'); return; }
-    if (lineIndex >= parsedLyrics.length - 1) lineIndex = 0;
-    const delay = Number($('line-delay').value) * 1000;
-    lyricTimer = setInterval(() => advanceLyrics(1), delay);
-    $('play-lyrics').textContent = 'Ⅱ'; $('play-lyrics').setAttribute('aria-label', 'Pause auto-advance');
-    renderLyrics();
+  function startLyrics(){
+    if(!parsedLyrics.length){$('lyric-editor').hidden=false;toast('Open an official lyric video or import permitted lyrics first.');return;}
+    if(lyricsTimed()){
+      if(lyricElapsed>=songEnd()-1)seekLyrics(0);
+      lyricClockStart=performance.now()-lyricElapsed*1000;
+      lastClockDraw=0;
+      const step=(now)=>{
+        lyricElapsed=Math.max(0,(now-lyricClockStart)/1000);
+        const nextIndex=closestTimedIndex(lyricElapsed);
+        if(nextIndex!==lineIndex){lineIndex=nextIndex;renderLyrics();}
+        if(now-lastClockDraw>200){updateTimeline();lastClockDraw=now;}
+        if(lyricElapsed>=songEnd()){lyricElapsed=songEnd();stopLyrics();updateTimeline();return;}
+        lyricFrame=requestAnimationFrame(step);
+      };
+      lyricFrame=requestAnimationFrame(step);
+    }else{
+      if(lineIndex>=parsedLyrics.length-1)lineIndex=0;
+      const delay=Number($('line-delay').value)*1000;
+      lyricTimer=setInterval(()=>advanceLyrics(1),delay);
+    }
+    $('play-lyrics').textContent='Ⅱ';$('play-lyrics').setAttribute('aria-label','Pause auto-advance');renderLyrics();
   }
-  $('song-search').addEventListener('input', (event) => showSongList(event.target.value));
-  $('previous-line').addEventListener('click', () => advanceLyrics(-1));
-  $('next-line').addEventListener('click', () => advanceLyrics(1));
-  $('play-lyrics').addEventListener('click', () => lyricTimer === null ? startLyrics() : stopLyrics());
-  $('jump-chorus').addEventListener('click', () => {
-    const starts = parsedLyrics.map((row,i) => row.chorusStart ? i : -1).filter((i) => i >= 0);
-    if (!starts.length) { toast('Add [chorus] above a chorus to enable this jump.'); return; }
-    lineIndex = starts.find((i) => i > lineIndex) ?? starts[0]; renderLyrics();
+  $('song-search').addEventListener('input',event=>showSongList(event.target.value));
+  $('previous-line').addEventListener('click',()=>advanceLyrics(-1));
+  $('next-line').addEventListener('click',()=>advanceLyrics(1));
+  $('play-lyrics').addEventListener('click',()=>lyricTimer===null&&lyricFrame===null?startLyrics():stopLyrics());
+  $('jump-chorus').addEventListener('click',()=>{
+    const starts=parsedLyrics.map((r,i)=>r.chorusStart?i:-1).filter(i=>i>=0);
+    if(!starts.length){toast('Add [chorus] above a chorus to enable this jump.');return;}
+    const index=starts.find(i=>i>lineIndex)??starts[0];
+    if(lyricsTimed())seekLyrics(parsedLyrics[index].time);
+    else{lineIndex=index;renderLyrics();}
   });
-  function toggleEditor() { $('lyric-editor').hidden = !$('lyric-editor').hidden; if (!$('lyric-editor').hidden) $('lyric-input').focus(); }
-  $('toggle-editor').addEventListener('click', toggleEditor);
-  $('empty-edit').addEventListener('click', toggleEditor);
-  $('save-lyrics').addEventListener('click', () => {
-    const input = $('lyric-input').value.slice(0, 100000);
-    if (!safeSet(lyricsKey(song), input)) return;
-    parsedLyrics = parseLyrics(input); lineIndex = 0; stopLyrics(); renderLyrics(); $('lyric-editor').hidden = true;
+  function toggleEditor(){$('lyric-editor').hidden=!$('lyric-editor').hidden;if(!$('lyric-editor').hidden)$('lyric-input').focus();}
+  $('toggle-editor').addEventListener('click',toggleEditor);
+  $('empty-edit').addEventListener('click',toggleEditor);
+  $('save-lyrics').addEventListener('click',()=>{
+    const input=$('lyric-input').value.slice(0,100000);
+    if(!safeSet(lyricsKey(song),input))return;
+    parsedLyrics=parseLyrics(input);demoActive=false;lineIndex=0;lyricElapsed=0;
+    stopLyrics();renderLyrics();$('lyric-editor').hidden=true;showSongList($('song-search').value);
     toast('Lyrics saved privately on this device.');
   });
-  $('clear-lyrics').addEventListener('click', () => {
-    $('lyric-input').value = ''; safeSet(lyricsKey(song), ''); parsedLyrics = []; stopLyrics(); renderLyrics(); toast('Lyrics cleared for this song.');
+  $('clear-lyrics').addEventListener('click',()=>{
+    $('lyric-input').value='';safeSet(lyricsKey(song),'');parsedLyrics=[];demoActive=false;lyricElapsed=0;
+    stopLyrics();renderLyrics();showSongList($('song-search').value);toast('Lyrics cleared for this song.');
   });
-  $('font-size').addEventListener('input', renderLyrics);
-  $('line-delay').addEventListener('input', () => {
-    $('delay-output').textContent = $('line-delay').value + 's';
-    if (lyricTimer !== null) { stopLyrics(); startLyrics(); }
+  $('font-size').addEventListener('input',renderLyrics);
+  $('line-delay').addEventListener('input',()=>{
+    $('delay-output').textContent=$('line-delay').value+'s';
+    if(lyricTimer!==null){stopLyrics();startLyrics();}
+  });
+  $('timed-seek').addEventListener('input',event=>seekLyrics(Number(event.target.value)));
+  $('timed-back').addEventListener('click',()=>seekLyrics(lyricElapsed-3));
+  $('timed-forward').addEventListener('click',()=>seekLyrics(lyricElapsed+3));
+  $('try-demo').addEventListener('click',()=>{
+    stopLyrics();demoActive=true;parsedLyrics=parseLyrics(DEMO_LYRICS);lineIndex=0;lyricElapsed=0;
+    renderLyrics();toast('Original sample loaded. Try Play, next line or Jump to chorus.');
+  });
+  $('import-lyrics-button').addEventListener('click',()=>$('lyrics-upload').click());
+  $('lyrics-upload').addEventListener('change',async(event)=>{
+    const files=[...(event.target.files||[])];
+    if(!files.length)return;
+    let loaded=0,skipped=0,firstSong=null;
+    for(const file of files){
+      if(!/\.(txt|lrc)$/i.test(file.name)||file.size>200000){skipped++;continue;}
+      const stem=normalizedName(file.name.replace(/\.(txt|lrc)$/i,'').replace(/^ed\s*sheeran[\s_-]*/i,''));
+      const matches=SONGS.filter(name=>normalizedName(name)===stem);
+      const match=matches[0]||(files.length===1?song:null);
+      if(!match){skipped++;continue;}
+      const content=(await file.text()).slice(0,100000);
+      if(!parseLyrics(content).length||!safeSet(lyricsKey(match),content)){skipped++;continue;}
+      loaded++;firstSong??=match;
+    }
+    event.target.value='';
+    if(firstSong)selectSong(firstSong);
+    toast(loaded?`${loaded} song${loaded===1?'':'s'} imported locally${skipped?' · '+skipped+' skipped':''}.`:'No valid text or timed lyric file found.');
   });
 
   // Speech-to-text cue assist: NOT fingerprint-based song recognition.
