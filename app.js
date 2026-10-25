@@ -462,11 +462,26 @@ Hold this moment in the air`;
     if(line)lines.push(line);
     lines.slice(0,maxLines).forEach((item,i)=> ctx.fillText(i===maxLines-1 && lines.length>maxLines ? item+'…':item,x,y+i*lineHeight));
   }
-  // Souvenir look: adjust these four values to fine-tune the design.
+  // Souvenir look: adjust these defaults; pink filter opacity is also adjustable in the editor.
   const SOUVENIR_ART_OPACITY = 0.15;       // Circle rings + heart: 0 = invisible, 1 = fully visible.
   const SOUVENIR_PHOTO_OPACITY = 0.80;     // Uploaded photo visibility.
   const SOUVENIR_TOUR_PINK = '#D73F82';   // Dominant pink sampled from the Loop Tour poster.
-  const SOUVENIR_PINK_OVERLAY_OPACITY = 0.34; // Pink tint over the ENTIRE uploaded photo.
+  const savedFilterPercent = Number(safeGet('souvenirPinkFilter', 34));
+  let SOUVENIR_PINK_OVERLAY_OPACITY = Number.isFinite(savedFilterPercent)
+    ? Math.min(1, Math.max(0, savedFilterPercent / 100)) : 0.34; // Pink tint over the entire uploaded photo.
+  const filterSlider = $('filter-opacity');
+  const filterValue = $('filter-opacity-value');
+  const showFilterPercent = () => { filterValue.textContent = Math.round(SOUVENIR_PINK_OVERLAY_OPACITY * 100) + '%'; };
+  filterSlider.value = String(Math.round(SOUVENIR_PINK_OVERLAY_OPACITY * 100));
+  showFilterPercent();
+  filterSlider.addEventListener('input', (event) => {
+    SOUVENIR_PINK_OVERLAY_OPACITY = Number(event.target.value) / 100;
+    showFilterPercent();
+    schedulePreview();
+  });
+  filterSlider.addEventListener('change', (event) => {
+    safeSet('souvenirPinkFilter', Number(event.target.value));
+  });
   const SOUVENIR_TOUR_POSTER_OPACITY = 0.55;  // Maximum poster visibility in the lower half.
   // Both photos are blended with gradual transparency masks, not hard-edged crops.
   // Draw to the on-page preview canvas AND the exported PNG from one shared renderer.

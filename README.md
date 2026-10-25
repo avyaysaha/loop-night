@@ -77,3 +77,10 @@ all other included files are unchanged.
 - Imported lyrics are stored only in local browser storage; the site does not transmit or publish lyrics. Not all browsers can import every text encoding.
 - The original demo text in Try Demo is not Ed Sheeran lyrics. Automatic microphone-based song matching remains experimental speech-title recognition only.
 - Displaying complete commercial lyrics in a publicly distributed application requires appropriate permission or a licensed lyrics API. No unlicensed copyrighted lyrics are bundled.
+
+
+## Adjustable photo filter (new)
+
+The **Memories** page includes a **Pink filter opacity** slider from 0% to 100%, initially 34%. When you upload a personal photo, moving this slider updates the souvenir preview immediately and the same setting is used for **Download** and **Share**. The percentage is stored in this browser and restored on the next visit. It adjusts only the tour-pink `#D73F82` tint on the user-uploaded photo, while keeping the bottom-half Loop Tour artwork at 55%, circles and heart at 15%, and the feathered image transitions unchanged.
+
+Key source references: `index.html` uses `#filter-opacity`; `app.js` declares `SOUVENIR_PINK_OVERLAY_OPACITY` and handles its `input` and `change` events; `styles.css` styles the control. The service worker cache version has been bumped for existing GitHub Pages installations.
